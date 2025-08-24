@@ -24,6 +24,8 @@ export function CustomerManagement() {
     filter_type: '',
     birth_date: '',
     guarantee_expiry: '',
+    last_service: '',
+    next_service: '',
     status: 'Active',
   });
 
@@ -72,6 +74,8 @@ export function CustomerManagement() {
       filter_type: customer.filter_type || '',
       birth_date: customer.birth_date || '',
       guarantee_expiry: customer.guarantee_expiry || '',
+      last_service: customer.last_service || '',
+      next_service: customer.next_service || '',
       status: customer.status,
     });
     setShowAddForm(true);
@@ -96,6 +100,8 @@ export function CustomerManagement() {
       filter_type: '',
       birth_date: '',
       guarantee_expiry: '',
+      last_service: '',
+      next_service: '',
       status: 'Active',
     });
     setEditingCustomer(null);
@@ -342,6 +348,38 @@ export function CustomerManagement() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Service
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.last_service}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        last_service: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Next Service
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.next_service}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        next_service: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Birth Date

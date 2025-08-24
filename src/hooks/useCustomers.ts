@@ -15,7 +15,6 @@ export function useCustomers() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      console.log('Fetched customers:', data); // Add this
       setCustomers(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

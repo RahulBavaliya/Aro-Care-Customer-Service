@@ -10,22 +10,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types
-export interface Customer {
+export type Customer = {
   id: string;
   name: string;
   phone: string;
   email?: string;
   address?: string;
-  join_date: string;
+  join_date?: string;
   filter_type?: string;
   last_service?: string;
   next_service?: string;
   guarantee_expiry?: string;
-  status: string;
+  status?: string;
   birth_date?: string;
-  created_at: string;
-  updated_at: string;
-}
+  created_at?: string;
+  updated_at?: string;
+};
 
 export interface MessageTemplate {
   id: string;
