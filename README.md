@@ -1,4 +1,4 @@
-# Dada Aro Care - Customer Service Platform
+# Aro Care - Customer Service Platform
 
 A comprehensive customer service management platform with automated messaging, service reminders, and review capabilities.
 
