@@ -1,64 +1,24 @@
 import React, { useState } from 'react';
-import { Filter, Calendar, AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
+import {
+  Filter,
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { useFilterManagement } from '../hooks/useFilterManagement';
 
 export function FilterManagement() {
   const [activeView, setActiveView] = useState('overview');
 
-  const filterStats = [
-    { label: 'Due Today', value: '15', icon: AlertTriangle, color: 'bg-red-500' },
-    { label: 'Due This Week', value: '47', icon: Clock, color: 'bg-orange-500' },
-    { label: 'Due This Month', value: '124', icon: Calendar, color: 'bg-blue-500' },
-    { label: 'Completed This Month', value: '289', icon: CheckCircle, color: 'bg-green-500' }
-  ];
-
-  const pendingFilters = [
-    {
-      customerName: 'Rahul Sharma',
-      phone: '+91 98765 43210',
-      filterType: 'RO + UV',
-      installDate: '2023-01-15',
-      dueDate: '2024-01-15',
-      daysOverdue: 15,
-      priority: 'High'
-    },
-    {
-      customerName: 'Priya Patel',
-      phone: '+91 87654 32109',
-      filterType: 'UV + UF',
-      installDate: '2023-03-20',
-      dueDate: '2024-03-20',
-      daysOverdue: 8,
-      priority: 'High'
-    },
-    {
-      customerName: 'Amit Kumar',
-      phone: '+91 76543 21098',
-      filterType: 'RO',
-      installDate: '2023-06-10',
-      dueDate: '2024-06-10',
-      daysOverdue: 0,
-      priority: 'Medium'
-    }
-  ];
-
-  const filterChangeHistory = [
-    {
-      customerName: 'Sunita Devi',
-      filterType: 'RO + UV',
-      changeDate: '2024-01-20',
-      nextDue: '2024-07-20',
-      technician: 'Ravi Kumar',
-      status: 'Completed'
-    },
-    {
-      customerName: 'Rajesh Gupta',
-      filterType: 'UV',
-      changeDate: '2024-01-18',
-      nextDue: '2024-04-18',
-      technician: 'Suresh Yadav',
-      status: 'Completed'
-    }
-  ];
+  const {
+    filterStats,
+    pendingFilters,
+    filterHistory,
+    loading,
+    error,
+    refetch
+  } = useFilterManagement();
 
   return (
     <div className="space-y-6">
@@ -113,14 +73,15 @@ export function FilterManagement() {
           {activeView === 'overview' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Filter Change Overview</h3>
-              
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-semibold text-red-900">Overdue Filters</h4>
                     <AlertTriangle className="h-5 w-5 text-red-600" />
                   </div>
-                  <p className="text-3xl font-bold text-red-900">23</p>
+                  <p className="text-3xl font-bold text-red-900">
+                    {pendingFilters.filter(f => f.daysOverdue > 0).length}
+                  </p>
                   <p className="text-sm text-red-700 mt-2">Immediate attention required</p>
                 </div>
 
@@ -129,7 +90,7 @@ export function FilterManagement() {
                     <h4 className="font-semibold text-blue-900">Due This Month</h4>
                     <Calendar className="h-5 w-5 text-blue-600" />
                   </div>
-                  <p className="text-3xl font-bold text-blue-900">124</p>
+                  <p className="text-3xl font-bold text-blue-900">{pendingFilters.length}</p>
                   <p className="text-sm text-blue-700 mt-2">Schedule appointments</p>
                 </div>
               </div>
@@ -205,9 +166,13 @@ export function FilterManagement() {
           {activeView === 'history' && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Filter Change History</h3>
-              
-              <div className="space-y-3">
-                {filterChangeHistory.map((record, index) => (
+
+              {loading ? (
+                <p className="text-gray-500">Loading...</p>
+              ) : filterHistory.length === 0 ? (
+                <p className="text-gray-500">No history records found.</p>
+              ) : (
+                filterHistory.map((record, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -236,15 +201,14 @@ export function FilterManagement() {
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
           )}
 
           {activeView === 'schedule' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Filter Change Schedule</h3>
-              
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="text-center text-gray-500 py-8">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
