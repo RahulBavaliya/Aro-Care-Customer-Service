@@ -1,112 +1,110 @@
 # Aro Care - Customer Service Platform
 
-A comprehensive customer service management platform with automated messaging, service reminders, and review capabilities.
+A comprehensive customer service management platform with automated WhatsApp messaging, service reminders, and review capabilities.
 
 ## 🚀 Features
 
 - **Customer Management**: Complete customer database with service records
-- **Automated Messaging**: WhatsApp and SMS integration with personalized templates
+- **Automated WhatsApp Messaging**: Meta Business API integration with personalized templates
 - **Service Reviews**: Customer feedback platform with rating analytics
 - **Filter Management**: Track filter changes with customizable reminder periods
 - **Dashboard Analytics**: Real-time statistics and insights
-- **Notification Settings**: Comprehensive configuration for automated messaging
+- **Automated Cron Jobs**: Daily messaging at 12:30 AM IST
 
-## 📱 Messaging Integration
+## 📱 WhatsApp Integration
 
-### WhatsApp & SMS Gateway Setup
+### Meta WhatsApp Business API Setup
 
-The platform uses **Twilio** for both WhatsApp and SMS messaging. You need to configure the following environment variables:
+The platform uses **Meta WhatsApp Business API** for professional messaging. You need to configure the following environment variables:
 
 #### Required Environment Variables
 
 Add these to your Supabase Edge Functions environment:
 
 ```bash
-# Twilio Configuration
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_PHONE_NUMBER=+1234567890  # Your Twilio phone number for SMS
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886  # Twilio WhatsApp sandbox number
+# Meta WhatsApp Business API Configuration
+META_ACCESS_TOKEN=your_meta_access_token
+META_PHONE_NUMBER_ID=your_phone_number_id
+META_BUSINESS_ACCOUNT_ID=your_business_account_id
 ```
 
-#### How to Get Twilio Credentials
+#### How to Get Meta WhatsApp Credentials
 
-1. **Sign up for Twilio**: Go to [twilio.com](https://www.twilio.com) and create an account
-2. **Get Account SID & Auth Token**: 
-   - Go to Console Dashboard
-   - Copy your Account SID and Auth Token
-3. **Get Phone Number**: 
-   - Go to Phone Numbers → Manage → Buy a number
-   - Choose a number for SMS messaging
-4. **WhatsApp Setup**:
-   - Go to Messaging → Try it out → Send a WhatsApp message
-   - Use the sandbox number: `whatsapp:+14155238886`
-   - For production, apply for WhatsApp Business API approval
+1. **Facebook Developer Account**: Go to [developers.facebook.com](https://developers.facebook.com)
+2. **Create App**: Create a new Business app
+3. **Add WhatsApp Product**: Add WhatsApp Business API to your app
+4. **Get Phone Number ID**: From WhatsApp → API Setup
+5. **Generate Access Token**: From App Settings → Basic
+6. **Business Verification**: Complete business verification for production
 
-#### Alternative SMS Providers
+#### WhatsApp Business API Features
 
-You can also integrate other SMS providers by modifying the edge functions:
+- ✅ **Professional Messaging**: Business-grade WhatsApp integration
+- ✅ **Rich Media Support**: Text, images, documents, and templates
+- ✅ **Delivery Receipts**: Real-time message status tracking
+- ✅ **Rate Limiting**: Automatic handling of API limits
+- ✅ **Indian Phone Numbers**: Optimized for +91 country code
 
-**TextLocal (India)**:
-```javascript
-// Add to environment variables
-TEXTLOCAL_API_KEY=your_textlocal_api_key
-TEXTLOCAL_SENDER=your_sender_name
-```
+## 🕐 Automated Messaging Cron Job
 
-**MSG91 (India)**:
-```javascript
-// Add to environment variables
-MSG91_API_KEY=your_msg91_api_key
-MSG91_SENDER_ID=your_sender_id
-MSG91_ROUTE=4  // Transactional route
-```
+### Daily Automation at 12:30 AM IST
 
-**AWS SNS**:
-```javascript
-// Add to environment variables
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_REGION=your_aws_region
-```
+The platform includes a powerful cron job that runs every night at 12:30 AM IST to send automated messages:
 
-### Setting Up Environment Variables in Supabase
+#### Automated Message Types
 
-1. Go to your Supabase project dashboard
-2. Navigate to Settings → Edge Functions
-3. Add the environment variables in the "Environment Variables" section
-4. Deploy the edge functions
+1. **Birthday Messages**
+   - Automatically detects customers with birthdays today
+   - Sends personalized birthday wishes
+   - Uses active birthday message templates
 
-### Message Features
+2. **Filter Change Reminders**
+   - Identifies customers with overdue filter changes
+   - Sends service reminders based on `next_service` date
+   - Helps maintain customer service schedules
 
-- **Personalization**: Use placeholders like `[NAME]`, `[PHONE]`, `[FILTER_TYPE]`
-- **Bulk Messaging**: Send to multiple customers at once
-- **Scheduling**: Schedule messages for future delivery
-- **Delivery Status**: Track message delivery status
-- **Rate Limiting**: Built-in delays to avoid provider limits
+3. **Guarantee Expiry Notifications**
+   - Alerts customers 7 days before guarantee expiry
+   - Helps with warranty management
+   - Encourages service renewals
 
-### Message Templates
+#### Cron Job Features
 
-Create templates for different scenarios:
-- **Birthday Messages**: Personalized birthday wishes
-- **Welcome Messages**: New customer onboarding
-- **Filter Reminders**: Service due notifications
-- **Guarantee Notifications**: Warranty expiry alerts
-- **Promotional Messages**: Marketing campaigns
-- **Loan Messages**: Payment reminders
+- ✅ **IST Timezone**: Runs at 12:30 AM Indian Standard Time
+- ✅ **Smart Filtering**: Automatically identifies target customers
+- ✅ **Template Integration**: Uses active message templates
+- ✅ **Database Logging**: All messages logged in `scheduled_messages`
+- ✅ **Error Handling**: Comprehensive error tracking and reporting
+- ✅ **Bulk Processing**: Handles multiple customers efficiently
+
+#### Setting Up Cron Job in Supabase
+
+1. Go to Supabase Dashboard → Database → Cron
+2. Create new cron job:
+   ```sql
+   SELECT cron.schedule(
+     'automated-messaging',
+     '30 19 * * *',  -- 12:30 AM IST (19:00 UTC)
+     'SELECT net.http_post(
+       url := ''https://your-project.supabase.co/functions/v1/automated-messaging-cron'',
+       headers := ''{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"}''::jsonb
+     );'
+   );
+   ```
 
 ## 🛠️ Installation & Setup
 
 1. **Clone the repository**
 2. **Install dependencies**: `npm install`
 3. **Connect to Supabase**: Click "Connect to Supabase" button
-4. **Configure messaging**: Add Twilio credentials to Supabase environment
-5. **Run the application**: `npm run dev`
+4. **Configure WhatsApp**: Add Meta API credentials to Supabase environment
+5. **Set up Cron Job**: Configure automated messaging schedule
+6. **Run the application**: `npm run dev`
 
 ## 📊 Database Schema
 
 - **customers**: Customer profiles and service history
-- **message_templates**: Customizable message templates
+- **message_templates**: Customizable WhatsApp message templates
 - **scheduled_messages**: Message scheduling and delivery tracking
 - **service_reviews**: Customer feedback and ratings
 - **notification_settings**: Automated messaging configuration
@@ -114,18 +112,22 @@ Create templates for different scenarios:
 
 ## 🔧 Usage
 
-### Sending Messages
+### Sending WhatsApp Messages
 
 1. **Compose Tab**: 
    - Select message type and template
    - Choose recipients (All, Birthday Today, Filter Due)
-   - Select WhatsApp or SMS
    - Send immediately or schedule for later
 
 2. **Scheduled Messages Tab**:
-   - View all scheduled messages
+   - View all scheduled WhatsApp messages
    - Edit or delete scheduled messages
    - Track delivery status
+
+3. **Automated Messages**:
+   - Birthday wishes sent automatically
+   - Filter reminders for due services
+   - Guarantee expiry notifications
 
 ### Customer Management
 
@@ -139,7 +141,7 @@ Create templates for different scenarios:
 - Real-time dashboard with key metrics
 - Customer birthday tracking
 - Filter change due alerts
-- Message delivery statistics
+- WhatsApp message delivery statistics
 - Service review analytics
 
 ## 🔒 Security
@@ -148,6 +150,7 @@ Create templates for different scenarios:
 - Secure API endpoints with authentication
 - Environment variable protection
 - Rate limiting on message sending
+- Meta Business API compliance
 
 ## 📞 Support
 
@@ -155,4 +158,4 @@ For technical support or feature requests, please contact the development team.
 
 ---
 
-**Dada Aro Care** - Providing excellent customer service through technology 💦
+**Dada Aro Care** - Providing excellent customer service through WhatsApp automation 💬

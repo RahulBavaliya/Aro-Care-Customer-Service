@@ -3,7 +3,7 @@ import { Send, Calendar, Edit, Trash2, Plus, MessageSquare, Users, Clock, Smartp
 import { useMessageTemplates } from '../hooks/useMessageTemplates';
 import { useScheduledMessages } from '../hooks/useScheduledMessages';
 import { useCustomers } from '../hooks/useCustomers';
-import { sendMessage, sendBulkMessages, updateScheduledMessageStatus } from '../lib/messaging';
+import { sendWhatsAppMessage, sendBulkWhatsAppMessages, updateScheduledMessageStatus } from '../lib/messaging';
 
 export function MessageCenter() {
   const [activeTab, setActiveTab] = useState('templates');
@@ -31,7 +31,6 @@ export function MessageCenter() {
     recipient_name: '',
     message_type: 'birthday',
     scheduled_for: '',
-    message_method: 'whatsapp',
     template_content: '',
     recipient_phone: ''
   });
@@ -41,7 +40,6 @@ export function MessageCenter() {
     message_type: 'birthday',
     template_id: '',
     recipients: 'all',
-    message_method: 'whatsapp',
     scheduled_for: '',
     send_now: true
   });
@@ -130,7 +128,8 @@ export function MessageCenter() {
         recipient_name: selectedCustomer?.name || scheduledForm.recipient_name,
         recipient_phone: selectedCustomer?.phone || scheduledForm.recipient_phone,
         template_content: selectedTemplate?.content || scheduledForm.template_content,
-        message_type: selectedTemplate?.type || scheduledForm.message_type
+        message_type: selectedTemplate?.type || scheduledForm.message_type,
+        message_method: 'whatsapp'
       };
 
       if (editingScheduled) {
@@ -146,7 +145,6 @@ export function MessageCenter() {
         recipient_name: '',
         message_type: 'birthday',
         scheduled_for: '',
-        message_method: 'whatsapp',
         template_content: '',
         recipient_phone: ''
       });
@@ -171,7 +169,7 @@ export function MessageCenter() {
     }
 
     // Show confirmation dialog
-    const confirmMessage = `Send ${composeForm.message_method.toUpperCase()} message to ${selectedCustomers.length} customers?`;
+    const confirmMessage = `Send WhatsApp message to ${selectedCustomers.length} customers?`;
     if (!window.confirm(confirmMessage)) {
       return;
     }
@@ -187,16 +185,17 @@ export function MessageCenter() {
       return {
         to: customer.phone,
         message: personalizedContent,
-        method: composeForm.message_method as 'whatsapp' | 'sms',
+        method: 'whatsapp' as const,
         customerName: customer.name,
         customerId: customer.id,
+        messageType: composeForm.message_type,
       };
     });
 
     try {
       if (composeForm.send_now) {
         // Send messages immediately
-        const result = await sendBulkMessages(messages);
+        const result = await sendBulkWhatsAppMessages(messages);
         
         // Save successful messages to database
         for (const successMsg of result.results) {
@@ -206,7 +205,7 @@ export function MessageCenter() {
             recipient_name: successMsg.customerName,
             recipient_phone: successMsg.to,
             message_type: composeForm.message_type,
-            message_method: composeForm.message_method,
+            message_method: 'whatsapp',
             template_content: messages.find(m => m.customerId === successMsg.customerId)?.message || '',
             scheduled_for: new Date().toISOString(),
             status: 'Sent',
@@ -223,7 +222,7 @@ export function MessageCenter() {
             recipient_name: errorMsg.customerName,
             recipient_phone: errorMsg.to,
             message_type: composeForm.message_type,
-            message_method: composeForm.message_method,
+            message_method: 'whatsapp',
             template_content: messages.find(m => m.customerId === errorMsg.customerId)?.message || '',
             scheduled_for: new Date().toISOString(),
             status: 'Failed',
@@ -242,7 +241,7 @@ export function MessageCenter() {
             recipient_name: message.customerName,
             recipient_phone: message.to,
             message_type: composeForm.message_type,
-            message_method: composeForm.message_method,
+            message_method: 'whatsapp',
             template_content: message.message,
             scheduled_for: new Date(composeForm.scheduled_for).toISOString(),
             status: 'Scheduled'
@@ -257,7 +256,6 @@ export function MessageCenter() {
         message_type: 'birthday',
         template_id: '',
         recipients: 'all',
-        message_method: 'whatsapp',
         scheduled_for: '',
         send_now: true
       });
@@ -281,7 +279,6 @@ export function MessageCenter() {
       recipient_name: message.recipient_name,
       message_type: message.message_type,
       scheduled_for: message.scheduled_for ? new Date(message.scheduled_for).toISOString().slice(0, 16) : '',
-      message_method: message.message_method || 'whatsapp',
       template_content: message.template_content || '',
       recipient_phone: message.recipient_phone || ''
     });
@@ -577,33 +574,10 @@ export function MessageCenter() {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Message Method
-                    </label>
-                    <div className="flex space-x-4 mt-2">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          value="whatsapp"
-                          checked={scheduledForm.message_method === 'whatsapp'}
-                          onChange={(e) => setScheduledForm({ ...scheduledForm, message_method: e.target.value })}
-                          className="mr-2"
-                        />
-                        <MessageCircle className="w-4 h-4 mr-1 text-green-600" />
-                        WhatsApp
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          value="sms"
-                          checked={scheduledForm.message_method === 'sms'}
-                          onChange={(e) => setScheduledForm({ ...scheduledForm, message_method: e.target.value })}
-                          className="mr-2"
-                        />
-                        <Smartphone className="w-4 h-4 mr-1 text-blue-600" />
-                        SMS
-                      </label>
+                  <div className="flex items-center justify-center">
+                    <div className="flex items-center space-x-2 bg-green-50 px-4 py-2 rounded-lg">
+                      <MessageCircle className="w-5 h-5 text-green-600" />
+                      <span className="text-green-800 font-medium">WhatsApp Only</span>
                     </div>
                   </div>
                 </div>
@@ -637,7 +611,6 @@ export function MessageCenter() {
                         recipient_name: '',
                         message_type: 'birthday',
                         scheduled_for: '',
-                        message_method: 'whatsapp',
                         template_content: '',
                         recipient_phone: ''
                       });
@@ -664,9 +637,6 @@ export function MessageCenter() {
                       Message Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Method
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Scheduled For
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -680,11 +650,11 @@ export function MessageCenter() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {scheduledLoading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center">Loading scheduled messages...</td>
+                      <td colSpan={5} className="px-6 py-4 text-center">Loading scheduled messages...</td>
                     </tr>
                   ) : scheduledMessages?.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">No scheduled messages found</td>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No scheduled messages found</td>
                     </tr>
                   ) : (
                     scheduledMessages?.map((message) => (
@@ -697,16 +667,6 @@ export function MessageCenter() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
                           {message.message_type?.replace('_', ' ')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {message.message_method === 'whatsapp' ? (
-                              <MessageCircle className="w-4 h-4 mr-1 text-green-600" />
-                            ) : (
-                              <Smartphone className="w-4 h-4 mr-1 text-blue-600" />
-                            )}
-                            <span className="text-sm text-gray-900 capitalize">{message.message_method}</span>
-                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(message.scheduled_for).toLocaleString()}
@@ -788,7 +748,7 @@ export function MessageCenter() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Recipients
@@ -803,34 +763,13 @@ export function MessageCenter() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Message Method
-                  </label>
-                  <div className="flex space-x-4 mt-2">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="whatsapp"
-                        checked={composeForm.message_method === 'whatsapp'}
-                        onChange={(e) => setComposeForm({ ...composeForm, message_method: e.target.value })}
-                        className="mr-2"
-                      />
-                      <MessageCircle className="w-4 h-4 mr-1 text-green-600" />
-                      WhatsApp
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="sms"
-                        checked={composeForm.message_method === 'sms'}
-                        onChange={(e) => setComposeForm({ ...composeForm, message_method: e.target.value })}
-                        className="mr-2"
-                      />
-                      <Smartphone className="w-4 h-4 mr-1 text-blue-600" />
-                      SMS
-                    </label>
-                  </div>
+              </div>
+
+              {/* WhatsApp Only Notice */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-green-800 font-medium">Messages will be sent via WhatsApp using Meta Business API</span>
                 </div>
               </div>
 

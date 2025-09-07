@@ -5,7 +5,8 @@ export interface MessageResult {
   messageId?: string;
   error?: string;
   to: string;
-  method: 'whatsapp' | 'sms';
+  method: 'whatsapp';
+  provider?: string;
 }
 
 export interface BulkMessageResult {
@@ -17,7 +18,7 @@ export interface BulkMessageResult {
     customerId?: string;
     customerName: string;
     to: string;
-    method: 'whatsapp' | 'sms';
+    method: 'whatsapp';
     messageId?: string;
     status: string;
     success: boolean;
@@ -26,28 +27,28 @@ export interface BulkMessageResult {
     customerId?: string;
     customerName: string;
     to: string;
-    method: 'whatsapp' | 'sms';
+    method: 'whatsapp';
     error: string;
     success: boolean;
   }>;
 }
 
 /**
- * Send a single message via WhatsApp or SMS
+ * Send a single WhatsApp message via Meta Business API
  */
-export async function sendMessage(
+export async function sendWhatsAppMessage(
   to: string,
   message: string,
-  method: 'whatsapp' | 'sms',
-  customerName?: string
+  customerName?: string,
+  messageType?: string
 ): Promise<MessageResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-message', {
+    const { data, error } = await supabase.functions.invoke('send-whatsapp-message', {
       body: {
         to,
         message,
-        method,
         customerName,
+        messageType,
       },
     });
 
@@ -59,7 +60,8 @@ export async function sendMessage(
       success: data.success,
       messageId: data.messageId,
       to: data.to,
-      method,
+      method: 'whatsapp',
+      provider: data.provider,
       error: data.error,
     };
   } catch (error) {
@@ -67,25 +69,26 @@ export async function sendMessage(
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       to,
-      method,
+      method: 'whatsapp',
     };
   }
 }
 
 /**
- * Send bulk messages to multiple recipients
+ * Send bulk WhatsApp messages to multiple recipients
  */
-export async function sendBulkMessages(
+export async function sendBulkWhatsAppMessages(
   messages: Array<{
     to: string;
     message: string;
-    method: 'whatsapp' | 'sms';
+    method: 'whatsapp';
     customerName: string;
     customerId?: string;
+    messageType?: string;
   }>
 ): Promise<BulkMessageResult> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-bulk-messages', {
+    const { data, error } = await supabase.functions.invoke('send-bulk-whatsapp', {
       body: { messages },
     });
 
@@ -105,7 +108,7 @@ export async function sendBulkMessages(
         customerId: msg.customerId,
         customerName: msg.customerName,
         to: msg.to,
-        method: msg.method,
+        method: 'whatsapp',
         error: error instanceof Error ? error.message : 'Unknown error',
         success: false,
       })),
@@ -148,13 +151,13 @@ export async function updateScheduledMessageStatus(
 /**
  * Format phone number for international use
  */
-export function formatPhoneNumber(phone: string, countryCode: string = '+91'): string {
+export function formatPhoneNumber(phone: string, countryCode: string = '91'): string {
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '');
   
-  // If already has country code, return as is
-  if (phone.startsWith('+')) {
-    return phone;
+  // If already has country code, return cleaned version
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    return cleaned;
   }
   
   // Add country code
@@ -165,27 +168,7 @@ export function formatPhoneNumber(phone: string, countryCode: string = '+91'): s
  * Validate phone number format
  */
 export function isValidPhoneNumber(phone: string): boolean {
-  // Basic validation for phone numbers
-  const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ''));
-}
-
-/**
- * Get message delivery status
- */
-export async function getMessageStatus(messageId: string): Promise<any> {
-  try {
-    const { data, error } = await supabase.functions.invoke('get-message-status', {
-      body: { messageId },
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error getting message status:', error);
-    return null;
-  }
+  // Validation for Indian phone numbers
+  const phoneRegex = /^(91)?\d{10}$/;
+  return phoneRegex.test(phone.replace(/\D/g, ''));
 }
