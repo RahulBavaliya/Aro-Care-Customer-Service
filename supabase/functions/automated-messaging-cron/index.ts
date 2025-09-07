@@ -48,7 +48,7 @@ serve(async (req) => {
         const { data: birthdayTemplate } = await supabase
           .from('message_templates')
           .select('*')
-          .eq('type', 'birthday')
+          .eq('type', 'Birthday')
           .eq('status', 'Active')
           .single()
 
@@ -96,6 +96,7 @@ serve(async (req) => {
       results.push(`Birthday messaging error: ${error.message}`)
     }
 
+    /*
     // 2. FILTER CHANGE REMINDERS
     try {
       // Get customers with filters due today or overdue
@@ -223,6 +224,7 @@ serve(async (req) => {
       console.error('Guarantee reminder error:', error)
       results.push(`Guarantee reminder error: ${error.message}`)
     }
+    */
 
     return new Response(
       JSON.stringify({
@@ -260,27 +262,48 @@ serve(async (req) => {
 // Helper function to send WhatsApp message
 async function sendWhatsAppMessage(to: string, message: string, customerName: string, messageType: string) {
   try {
-    const accessToken = Deno.env.get('META_ACCESS_TOKEN')
-    const phoneNumberId = Deno.env.get('META_PHONE_NUMBER_ID')
+    const accessToken = Deno.env.get('META_ACCESS_TOKEN');
+    const phoneNumberId = Deno.env.get('META_PHONE_NUMBER_ID');
 
     if (!accessToken || !phoneNumberId) {
-      throw new Error('Meta WhatsApp credentials not configured')
+      throw new Error('Meta WhatsApp credentials not configured');
     }
 
-    const formattedTo = to.replace(/\D/g, '').startsWith('91') 
-      ? to.replace(/\D/g, '') 
-      : `91${to.replace(/\D/g, '')}`
+    const formattedTo = to.replace(/\D/g, '').startsWith('91')
+      ? to.replace(/\D/g, '')
+      : `91${to.replace(/\D/g, '')}`;
 
-    const apiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`
+    const apiUrl = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
 
-    const messagePayload = {
+    // choose template based on messageType
+    const templateMap: Record<string, string> = {
+      birthday: "birthday_reminder",
+      filter_reminder: "filter_change",
+      guarantee: "guarantee_expiry"
+    };
+
+    const payload = {
       messaging_product: "whatsapp",
       to: formattedTo,
-      type: "text",
-      text: {
-        body: message
+      type: "template",
+      /*template: {
+        name: templateMap[messageType] || "hello_world",
+        language: { code: "en_US" },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: customerName },
+              { type: "text", text: message }
+            ]
+          }
+        ]
+      }*/
+      template: {
+        name: "hello_world",
+        language: { code: "en_US" }
       }
-    }
+    };
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -288,29 +311,17 @@ async function sendWhatsAppMessage(to: string, message: string, customerName: st
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(messagePayload)
-    })
+      body: JSON.stringify(payload)
+    });
 
-    const result = await response.json()
+    const result = await response.json();
+    console.log("📩 WhatsApp API response:", result);
 
-    if (response.ok) {
-      return {
-        success: true,
-        messageId: result.messages?.[0]?.id,
-        to: formattedTo
-      }
-    } else {
-      return {
-        success: false,
-        error: result.error?.message || 'Unknown error',
-        to: formattedTo
-      }
-    }
+    return response.ok
+      ? { success: true, messageId: result.messages?.[0]?.id, to: formattedTo }
+      : { success: false, error: result.error?.message || "Unknown error", to: formattedTo };
+
   } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      to
-    }
+    return { success: false, error: error.message, to };
   }
 }
